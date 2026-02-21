@@ -2,7 +2,7 @@
 
 **Google Autocomplete itibar izleme ve analiz platformu**
 
-[![CI](https://github.com/dermankarateke/Reputation-Monitor/actions/workflows/ci.yml/badge.svg)](https://github.com/dermankarateke/Reputation-Monitor/actions/workflows/ci.yml)
+[![CI](https://github.com/dermnx/suggestguard/actions/workflows/ci.yml/badge.svg)](https://github.com/dermnx/suggestguard/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io)
@@ -122,8 +122,8 @@ sunan bir alternatiftir.
 
 ```bash
 # Repoyu klonlayın
-git clone https://github.com/dermankarateke/Reputation-Monitor.git
-cd Reputation-Monitor
+git clone https://github.com/dermnx/suggestguard.git
+cd suggestguard
 
 # Bağımlılıkları yükleyin
 pip install -e ".[dev]"
@@ -397,5 +397,5 @@ Bu proje [MIT License](LICENSE) ile lisanslanmıştır.
 
 <p align="center">
   <b>SuggestGuard</b> ile markanızın dijital itibarını koruyun.<br>
-  Geliştirici: <a href="https://github.com/dermankarateke">Derman Karateke</a>
+  Geliştirici: <a href="https://github.com/dermnx">Derman Karateke</a>
 </p>

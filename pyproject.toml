@@ -41,10 +41,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/dermankarateke/Reputation-Monitor"
-Repository = "https://github.com/dermankarateke/Reputation-Monitor"
-Issues = "https://github.com/dermankarateke/Reputation-Monitor/issues"
-Changelog = "https://github.com/dermankarateke/Reputation-Monitor/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/dermnx/suggestguard"
+Repository = "https://github.com/dermnx/suggestguard"
+Issues = "https://github.com/dermnx/suggestguard/issues"
+Changelog = "https://github.com/dermnx/suggestguard/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = [

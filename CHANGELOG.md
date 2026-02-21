@@ -27,4 +27,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **CI Pipeline:** GitHub Actions — Python 3.10/3.11/3.12, ruff check, ruff format, pytest
 - **Dokümantasyon:** README.md, Türkçe vaka çalışması (docs/case-study-tr.md)
 
-[0.1.0]: https://github.com/dermankarateke/Reputation-Monitor/releases/tag/v0.1.0
+[0.1.0]: https://github.com/dermnx/suggestguard/releases/tag/v0.1.0
