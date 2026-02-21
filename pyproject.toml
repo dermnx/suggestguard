@@ -1,0 +1,57 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "suggestguard"
+version = "0.1.0"
+description = "Monitor Google autocomplete suggestions for brand reputation management"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [
+    { name = "Derman Karateke" },
+]
+keywords = [
+    "seo",
+    "reputation",
+    "brand-monitoring",
+    "google-autocomplete",
+    "sentiment-analysis",
+    "streamlit",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Office/Business",
+]
+dependencies = [
+    "streamlit",
+    "httpx",
+    "pyyaml",
+    "plotly",
+    "pandas",
+]
+
+[project.urls]
+Homepage = "https://github.com/dermankarateke/suggestguard"
+Repository = "https://github.com/dermankarateke/suggestguard"
+Issues = "https://github.com/dermankarateke/suggestguard/issues"
+Changelog = "https://github.com/dermankarateke/suggestguard/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "ruff",
+]
+
+[project.scripts]
+suggestguard-scan = "suggestguard.scanner:main"
