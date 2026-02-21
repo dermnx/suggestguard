@@ -59,16 +59,9 @@ hemen keşfetmeye başlayabilirsiniz.
 |---|---|
 | ![Dashboard](docs/screenshots/dashboard.png) | ![Tarama](docs/screenshots/tarama.png) |
 
-| Raporlar | Kampanyalar |
-|---|---|
-| ![Raporlar](docs/screenshots/raporlar.png) | ![Kampanyalar](docs/screenshots/kampanyalar.png) |
-
 | Markalar | Ayarlar |
 |---|---|
 | ![Markalar](docs/screenshots/markalar.png) | ![Ayarlar](docs/screenshots/ayarlar.png) |
-
-> Screenshot'lar henüz eklenmemişse `docs/screenshots/` klasörünü oluşturup
-> ekran görüntülerini kaydedin.
 
 ---
 
