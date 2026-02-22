@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import re
 from copy import deepcopy
@@ -10,6 +11,8 @@ from pathlib import Path
 import yaml
 
 from suggestguard.database import Database
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_CONFIG: dict = {
     "brands": [],
@@ -74,11 +77,14 @@ class SuggestGuardConfig:
         )
 
     def init_config(self) -> None:
-        """Create config file with defaults if it doesn't exist."""
+        """Create config file with defaults if it doesn't exist, then validate."""
         if not self.config_path.exists():
             self.data = deepcopy(DEFAULT_CONFIG)
             self.save()
         self.load()
+        errors = self.validate()
+        for err in errors:
+            logger.warning("Config validation: %s", err)
 
     # ── access ───────────────────────────────────────────────────────
 

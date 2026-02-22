@@ -18,6 +18,7 @@ from suggestguard.ui.components.charts import (
     sentiment_pie_chart,
     sentiment_stacked_bar,
 )
+from suggestguard.ui.components.filters import brand_selector, require_brands
 from suggestguard.ui.components.tables import suggestions_table
 
 # ── page setup ───────────────────────────────────────────────────────
@@ -26,14 +27,7 @@ st.header("📈 Raporlar")
 st.caption("Detaylı analiz raporları, trend grafikleri ve dışa aktarım.")
 
 db = get_db()
-brands = db.list_brands(active_only=True)
-
-# ── guard ────────────────────────────────────────────────────────────
-
-if not brands:
-    st.info("Henüz marka eklenmemiş.")
-    st.page_link("app.py", label="← Ana Sayfa", use_container_width=False)
-    st.stop()
+brands = require_brands(db)
 
 # ── filters ──────────────────────────────────────────────────────────
 
@@ -42,11 +36,9 @@ st.subheader("Filtreler")
 f1, f2, f3 = st.columns([2, 2, 1])
 
 with f1:
-    brand_names = [b["name"] for b in brands]
-    brand_map = {b["name"]: b for b in brands}
-    selected_name = st.selectbox("Marka", brand_names, index=0)
-    brand = brand_map[selected_name]
+    brand = brand_selector(brands, label="Marka")
     brand_id = brand["id"]
+    selected_name = brand["name"]
 
 with f2:
     date_range = st.selectbox(

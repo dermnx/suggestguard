@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 
 import httpx
 
 logger = logging.getLogger(__name__)
+
+MAX_MESSAGE_LENGTH = 4000
+MAX_RETRIES = 3
 
 
 class SlackNotifier:
@@ -35,21 +39,38 @@ class SlackNotifier:
 
     async def send(self, message: str) -> bool:
         """Post a mrkdwn message to Slack. Returns True on success."""
+        if len(message) > MAX_MESSAGE_LENGTH:
+            message = message[: MAX_MESSAGE_LENGTH - 3] + "..."
+            logger.warning("Slack message truncated to %d chars", MAX_MESSAGE_LENGTH)
+
         client = await self._get_client()
         payload = {
             "text": message,
             "mrkdwn": True,
         }
-        try:
-            resp = await client.post(self.webhook_url, json=payload)
-            resp.raise_for_status()
-            return True
-        except httpx.HTTPStatusError as exc:
-            logger.error("Slack HTTP %s: %s", exc.response.status_code, exc.response.text)
-            return False
-        except (httpx.TimeoutException, httpx.ConnectError) as exc:
-            logger.error("Slack connection error: %s", exc)
-            return False
+        for attempt in range(1, MAX_RETRIES + 1):
+            try:
+                resp = await client.post(self.webhook_url, json=payload)
+                resp.raise_for_status()
+                return True
+            except httpx.HTTPStatusError as exc:
+                logger.error("Slack HTTP %s: %s", exc.response.status_code, exc.response.text)
+                return False
+            except (httpx.TimeoutException, httpx.ConnectError) as exc:
+                if attempt < MAX_RETRIES:
+                    delay = 2**attempt
+                    logger.warning(
+                        "Slack retry %d/%d after %ss: %s",
+                        attempt,
+                        MAX_RETRIES,
+                        delay,
+                        exc,
+                    )
+                    await asyncio.sleep(delay)
+                else:
+                    logger.error("Slack connection error after %d retries: %s", MAX_RETRIES, exc)
+                    return False
+        return False
 
     # ── formatters ───────────────────────────────────────────────────
 

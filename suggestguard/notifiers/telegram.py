@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 
 import httpx
@@ -9,6 +10,8 @@ import httpx
 logger = logging.getLogger(__name__)
 
 TELEGRAM_API = "https://api.telegram.org"
+MAX_MESSAGE_LENGTH = 4096
+MAX_RETRIES = 3
 
 
 class TelegramNotifier:
@@ -39,6 +42,10 @@ class TelegramNotifier:
 
     async def send(self, message: str) -> bool:
         """Send a Telegram message. Returns True on success."""
+        if len(message) > MAX_MESSAGE_LENGTH:
+            message = message[: MAX_MESSAGE_LENGTH - 3] + "..."
+            logger.warning("Telegram message truncated to %d chars", MAX_MESSAGE_LENGTH)
+
         client = await self._get_client()
         url = f"{TELEGRAM_API}/bot{self.bot_token}/sendMessage"
         payload = {
@@ -46,16 +53,29 @@ class TelegramNotifier:
             "text": message,
             "parse_mode": "HTML",
         }
-        try:
-            resp = await client.post(url, json=payload)
-            resp.raise_for_status()
-            return True
-        except httpx.HTTPStatusError as exc:
-            logger.error("Telegram HTTP %s: %s", exc.response.status_code, exc.response.text)
-            return False
-        except (httpx.TimeoutException, httpx.ConnectError) as exc:
-            logger.error("Telegram connection error: %s", exc)
-            return False
+        for attempt in range(1, MAX_RETRIES + 1):
+            try:
+                resp = await client.post(url, json=payload)
+                resp.raise_for_status()
+                return True
+            except httpx.HTTPStatusError as exc:
+                logger.error("Telegram HTTP %s: %s", exc.response.status_code, exc.response.text)
+                return False
+            except (httpx.TimeoutException, httpx.ConnectError) as exc:
+                if attempt < MAX_RETRIES:
+                    delay = 2**attempt
+                    logger.warning(
+                        "Telegram retry %d/%d after %ss: %s",
+                        attempt,
+                        MAX_RETRIES,
+                        delay,
+                        exc,
+                    )
+                    await asyncio.sleep(delay)
+                else:
+                    logger.error("Telegram connection error after %d retries: %s", MAX_RETRIES, exc)
+                    return False
+        return False
 
     # ── formatters ───────────────────────────────────────────────────
 

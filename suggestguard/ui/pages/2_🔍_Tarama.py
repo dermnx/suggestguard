@@ -12,6 +12,7 @@ import streamlit as st
 from suggestguard.config import SuggestGuardConfig, get_db
 from suggestguard.scanner import ScanEngine
 from suggestguard.ui.components.cards import metric_card
+from suggestguard.ui.components.filters import brand_selector, require_brands
 from suggestguard.ui.components.tables import suggestions_table
 
 # ── page setup ───────────────────────────────────────────────────────
@@ -20,21 +21,11 @@ st.header("🔍 Tarama")
 st.caption("Google Autocomplete önerilerini tarayın ve analiz edin.")
 
 db = get_db()
-brands = db.list_brands(active_only=True)
-
-# ── guard: no brands ─────────────────────────────────────────────────
-
-if not brands:
-    st.warning("Henüz aktif marka yok. Tarama başlatmak için önce bir marka ekleyin.")
-    st.page_link("app.py", label="← Ana Sayfa", use_container_width=False)
-    st.stop()
+brands = require_brands(db)
 
 # ── scan configuration ───────────────────────────────────────────────
 
 st.subheader("Tarama Ayarları")
-
-brand_names = [b["name"] for b in brands]
-brand_map = {b["name"]: b for b in brands}
 
 scan_all = st.checkbox("Tüm Markaları Tara", value=False)
 
@@ -42,8 +33,8 @@ if scan_all:
     selected_brands = brands
     st.info(f"{len(brands)} marka taranacak.")
 else:
-    selected_name = st.selectbox("Marka Seçin", brand_names, index=0)
-    selected_brands = [brand_map[selected_name]]
+    selected_brand = brand_selector(brands)
+    selected_brands = [selected_brand]
 
 # ── estimate ─────────────────────────────────────────────────────────
 

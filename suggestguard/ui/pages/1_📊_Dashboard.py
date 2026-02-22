@@ -11,6 +11,12 @@ from suggestguard.ui.components.charts import (
     negative_trend_line,
     sentiment_pie_chart,
 )
+from suggestguard.ui.components.filters import (
+    SENTIMENT_OPTIONS,
+    SENTIMENT_VALUE_MAP,
+    brand_selector,
+    require_brands,
+)
 from suggestguard.ui.components.tables import suggestions_table
 
 # ── page setup ───────────────────────────────────────────────────────
@@ -18,27 +24,13 @@ from suggestguard.ui.components.tables import suggestions_table
 st.header("📊 Dashboard")
 
 db = get_db()
-brands = db.list_brands(active_only=True)
-
-# ── guard: no brands ─────────────────────────────────────────────────
-
-if not brands:
-    st.info("Henüz marka eklenmemiş. Ana sayfadan marka ekleyin veya demo veri oluşturun.")
-    st.page_link("app.py", label="← Ana Sayfa", use_container_width=False)
-    st.stop()
+brands = require_brands(db)
 
 # ── brand selector ───────────────────────────────────────────────────
 
-brand_names = [b["name"] for b in brands]
-brand_map = {b["name"]: b for b in brands}
-
-selected_name = st.selectbox(
-    "Marka Seçin",
-    brand_names,
-    index=0,
-)
-brand = brand_map[selected_name]
+brand = brand_selector(brands)
 brand_id = brand["id"]
+selected_name = brand["name"]
 
 # ── fetch data ───────────────────────────────────────────────────────
 
@@ -135,7 +127,7 @@ filter_col1, filter_col2 = st.columns([1, 3])
 with filter_col1:
     sentiment_filter = st.selectbox(
         "Duygu Filtresi",
-        ["Tümü", "🔴 Negatif", "🟢 Pozitif", "⚪ Nötr"],
+        SENTIMENT_OPTIONS,
         index=0,
     )
 
@@ -144,12 +136,9 @@ with filter_col2:
 
 # apply filters
 filtered = all_suggestions
-if sentiment_filter == "🔴 Negatif":
-    filtered = [s for s in filtered if s.get("sentiment") == "negative"]
-elif sentiment_filter == "🟢 Pozitif":
-    filtered = [s for s in filtered if s.get("sentiment") == "positive"]
-elif sentiment_filter == "⚪ Nötr":
-    filtered = [s for s in filtered if s.get("sentiment") == "neutral"]
+sentiment_value = SENTIMENT_VALUE_MAP.get(sentiment_filter)
+if sentiment_value:
+    filtered = [s for s in filtered if s.get("sentiment") == sentiment_value]
 
 if search_query:
     q = search_query.lower()

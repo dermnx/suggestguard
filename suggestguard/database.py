@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import json
+import logging
 import sqlite3
 from datetime import datetime, timedelta
+
+logger = logging.getLogger(__name__)
 
 
 class Database:
@@ -42,7 +45,8 @@ class Database:
     # ── Schema ───────────────────────────────────────────────────────
 
     def _init_tables(self) -> None:
-        self.conn.executescript("""
+        try:
+            self.conn.executescript("""
             CREATE TABLE IF NOT EXISTS brands (
                 id              INTEGER PRIMARY KEY AUTOINCREMENT,
                 name            TEXT NOT NULL UNIQUE,
@@ -103,6 +107,8 @@ class Database:
                 message         TEXT NOT NULL
             );
         """)
+        except sqlite3.Error:
+            logger.exception("Failed to initialise database schema")
 
     # ── helpers ──────────────────────────────────────────────────────
 
@@ -130,23 +136,29 @@ class Database:
         expand_az: bool = True,
         expand_turkish: bool = True,
     ) -> int:
-        """Add a new brand and return its ID."""
-        cur = self.conn.execute(
-            """INSERT INTO brands
-               (name, keywords, language, country, expand_az, expand_turkish, created_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?)""",
-            (
-                name,
-                json.dumps(keywords, ensure_ascii=False),
-                language,
-                country,
-                expand_az,
-                expand_turkish,
-                self._now(),
-            ),
-        )
-        self.conn.commit()
-        return cur.lastrowid
+        """Add a new brand and return its ID.
+
+        Raises ``ValueError`` if a brand with the same name already exists.
+        """
+        try:
+            cur = self.conn.execute(
+                """INSERT INTO brands
+                   (name, keywords, language, country, expand_az, expand_turkish, created_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    name,
+                    json.dumps(keywords, ensure_ascii=False),
+                    language,
+                    country,
+                    expand_az,
+                    expand_turkish,
+                    self._now(),
+                ),
+            )
+            self.conn.commit()
+            return cur.lastrowid
+        except sqlite3.IntegrityError:
+            raise ValueError(f"Brand with name '{name}' already exists") from None
 
     def get_brand(self, brand_id: int) -> dict | None:
         """Return brand by ID, or ``None`` if not found."""
@@ -232,43 +244,57 @@ class Database:
         category: str | None = None,
     ) -> int:
         """Insert or update a suggestion, incrementing *times_seen* on update."""
-        existing = self.conn.execute(
-            "SELECT id, times_seen FROM suggestions WHERE brand_id = ? AND text = ?",
-            (brand_id, text),
-        ).fetchone()
+        try:
+            existing = self.conn.execute(
+                "SELECT id, times_seen FROM suggestions WHERE brand_id = ? AND text = ?",
+                (brand_id, text),
+            ).fetchone()
 
-        now = self._now()
+            now = self._now()
 
-        if existing:
-            self.conn.execute(
-                """UPDATE suggestions
-                   SET snapshot_id = ?, position = ?, sentiment = ?,
-                       sentiment_score = ?, category = ?,
-                       last_seen = ?, times_seen = ?
-                   WHERE id = ?""",
+            if existing:
+                self.conn.execute(
+                    """UPDATE suggestions
+                       SET snapshot_id = ?, position = ?, sentiment = ?,
+                           sentiment_score = ?, category = ?,
+                           last_seen = ?, times_seen = ?
+                       WHERE id = ?""",
+                    (
+                        snapshot_id,
+                        position,
+                        sentiment,
+                        sentiment_score,
+                        category,
+                        now,
+                        existing["times_seen"] + 1,
+                        existing["id"],
+                    ),
+                )
+                self.conn.commit()
+                return existing["id"]
+
+            cur = self.conn.execute(
+                """INSERT INTO suggestions
+                   (snapshot_id, brand_id, text, position, sentiment, sentiment_score,
+                    category, first_seen, last_seen)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     snapshot_id,
+                    brand_id,
+                    text,
                     position,
                     sentiment,
                     sentiment_score,
                     category,
                     now,
-                    existing["times_seen"] + 1,
-                    existing["id"],
+                    now,
                 ),
             )
             self.conn.commit()
-            return existing["id"]
-
-        cur = self.conn.execute(
-            """INSERT INTO suggestions
-               (snapshot_id, brand_id, text, position, sentiment, sentiment_score,
-                category, first_seen, last_seen)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (snapshot_id, brand_id, text, position, sentiment, sentiment_score, category, now, now),
-        )
-        self.conn.commit()
-        return cur.lastrowid
+            return cur.lastrowid
+        except sqlite3.Error:
+            self.conn.rollback()
+            raise
 
     def get_suggestions_for_brand(
         self,

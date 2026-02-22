@@ -126,19 +126,23 @@ with tab_tg:
         else:
             from suggestguard.notifiers.telegram import TelegramNotifier
 
-            notifier = TelegramNotifier(tg_token, tg_chat_id)
+            async def _test_telegram() -> bool:
+                notifier = TelegramNotifier(tg_token, tg_chat_id)
+                try:
+                    return await notifier.send(
+                        "🛡️ <b>SuggestGuard Test</b>\n\nTelegram bildirimi çalışıyor!"
+                    )
+                finally:
+                    await notifier.close()
+
             try:
-                ok = asyncio.run(
-                    notifier.send("🛡️ <b>SuggestGuard Test</b>\n\nTelegram bildirimi çalışıyor!")
-                )
+                ok = asyncio.run(_test_telegram())
                 if ok:
                     st.success("Test mesajı gönderildi!")
                 else:
                     st.error("Mesaj gönderilemedi. Token ve Chat ID'yi kontrol edin.")
             except Exception as exc:
                 st.error(f"Hata: {exc}")
-            finally:
-                asyncio.run(notifier.close())
 
 # ── Slack ────────────────────────────────────────────────────────────
 
@@ -176,19 +180,23 @@ with tab_slack:
         else:
             from suggestguard.notifiers.slack import SlackNotifier
 
-            notifier = SlackNotifier(slack_url)
+            async def _test_slack() -> bool:
+                notifier = SlackNotifier(slack_url)
+                try:
+                    return await notifier.send(
+                        ":shield: *SuggestGuard Test*\n\nSlack bildirimi çalışıyor!"
+                    )
+                finally:
+                    await notifier.close()
+
             try:
-                ok = asyncio.run(
-                    notifier.send(":shield: *SuggestGuard Test*\n\nSlack bildirimi çalışıyor!")
-                )
+                ok = asyncio.run(_test_slack())
                 if ok:
                     st.success("Test mesajı gönderildi!")
                 else:
                     st.error("Mesaj gönderilemedi. Webhook URL'yi kontrol edin.")
             except Exception as exc:
                 st.error(f"Hata: {exc}")
-            finally:
-                asyncio.run(notifier.close())
 
 # ── Webhook ──────────────────────────────────────────────────────────
 
@@ -243,25 +251,27 @@ with tab_webhook:
         else:
             from suggestguard.notifiers.webhook import WebhookNotifier
 
-            notifier = WebhookNotifier(wh_url, _parse_headers(wh_headers_raw))
-            try:
-                ok = asyncio.run(
-                    notifier.send(
+            async def _test_webhook() -> bool:
+                notifier = WebhookNotifier(wh_url, _parse_headers(wh_headers_raw))
+                try:
+                    return await notifier.send(
                         {
                             "event": "test",
                             "source": "SuggestGuard",
                             "message": "Webhook bildirimi çalışıyor!",
                         }
                     )
-                )
+                finally:
+                    await notifier.close()
+
+            try:
+                ok = asyncio.run(_test_webhook())
                 if ok:
                     st.success("Test payload gönderildi!")
                 else:
                     st.error("Gönderilemedi. URL ve başlıkları kontrol edin.")
             except Exception as exc:
                 st.error(f"Hata: {exc}")
-            finally:
-                asyncio.run(notifier.close())
 
 # ======================================================================
 # 3. Veritabanı Yönetimi

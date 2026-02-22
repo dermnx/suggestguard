@@ -9,6 +9,8 @@ import logging
 import sys
 from typing import Callable
 
+import httpx
+
 from suggestguard.analyzers.diff import DiffAnalyzer
 from suggestguard.analyzers.sentiment import SentimentAnalyzer
 from suggestguard.analyzers.turkish import TurkishTextProcessor
@@ -176,8 +178,8 @@ class ScanEngine:
             try:
                 report = await self.scan_brand(brand)
                 reports.append(report)
-            except Exception:
-                logger.exception("Error scanning brand %s", brand["name"])
+            except (httpx.HTTPError, ConnectionError, OSError, json.JSONDecodeError) as exc:
+                logger.error("Error scanning brand %s: %s", brand["name"], exc)
                 reports.append(
                     {
                         "brand_id": brand["id"],
@@ -235,19 +237,21 @@ class ScanEngine:
 
         for notifier in notifiers:
             try:
-                msg = notifier.format_new_negative_alert(brand_name, new_negatives)
-                await notifier.send(msg)
-            except AttributeError:
-                # WebhookNotifier doesn't have format_new_negative_alert
-                await notifier.send(
-                    {
+                if hasattr(notifier, "format_new_negative_alert"):
+                    msg = notifier.format_new_negative_alert(brand_name, new_negatives)
+                else:
+                    msg = {
                         "event": "new_negative_suggestions",
                         "brand": brand_name,
                         "suggestions": new_negatives,
                     }
+                await notifier.send(msg)
+            except (httpx.HTTPError, ConnectionError, OSError) as exc:
+                logger.warning(
+                    "Failed to send alert via %s: %s",
+                    type(notifier).__name__,
+                    exc,
                 )
-            except Exception:
-                logger.exception("Failed to send alert via %s", type(notifier).__name__)
             finally:
                 await notifier.close()
 

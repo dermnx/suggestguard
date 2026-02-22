@@ -68,7 +68,11 @@ class AutocompleteCollector(BaseCollector):
         }
         resp = await client.get(AUTOCOMPLETE_URL, params=params)
         resp.raise_for_status()
-        data = resp.json()
+        try:
+            data = resp.json()
+        except json.JSONDecodeError:
+            logger.warning("Malformed JSON response for query %r", query)
+            return []
         # Firefox-style response: [query, [suggestions...]]
         if isinstance(data, list) and len(data) >= 2:
             return list(data[1])

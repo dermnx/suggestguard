@@ -19,7 +19,7 @@ class WebhookNotifier:
         client: httpx.AsyncClient | None = None,
     ) -> None:
         self.url = url
-        self.headers = headers or {}
+        self.headers = dict(headers or {})
         self._external_client = client is not None
         self._client = client
 

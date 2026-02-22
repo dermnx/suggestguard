@@ -33,11 +33,11 @@ classifiers = [
     "Topic :: Office/Business",
 ]
 dependencies = [
-    "streamlit",
-    "httpx",
-    "pyyaml",
-    "plotly",
-    "pandas",
+    "streamlit>=1.28",
+    "httpx>=0.24",
+    "pyyaml>=6.0",
+    "plotly>=5.15",
+    "pandas>=2.0",
 ]
 
 [project.urls]
@@ -48,9 +48,9 @@ Changelog = "https://github.com/dermnx/suggestguard/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = [
-    "pytest",
-    "pytest-asyncio",
-    "ruff",
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+    "ruff>=0.1",
 ]
 
 [project.scripts]

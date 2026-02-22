@@ -2,9 +2,20 @@
 
 from __future__ import annotations
 
+import re
+
 from suggestguard.analyzers.turkish import TurkishTextProcessor
 
 _tp = TurkishTextProcessor()
+
+
+def _keyword_in_text(keyword: str, text: str) -> bool:
+    """Check if *keyword* appears in *text* as a word (not substring)."""
+    # Multi-word keywords use simple containment
+    if " " in keyword:
+        return keyword in text
+    # Single-word keywords use word boundary check
+    return bool(re.search(rf"\b{re.escape(keyword)}\b", text))
 
 
 class SentimentAnalyzer:
@@ -142,7 +153,7 @@ class SentimentAnalyzer:
         # --- check negatives (strongest match wins) ---
         neg_dict = self.NEGATIVE_KEYWORDS.get(language, self.NEGATIVE_KEYWORDS["tr"])
         for severity in ("strong", "moderate", "mild"):
-            matched = [kw for kw in neg_dict[severity] if kw in cleaned]
+            matched = [kw for kw in neg_dict[severity] if _keyword_in_text(kw, cleaned)]
             if matched:
                 score, confidence = self._SEVERITY_MAP[severity]
                 category = self._detect_category(matched)
@@ -156,7 +167,7 @@ class SentimentAnalyzer:
 
         # --- check positives ---
         pos_list = self.POSITIVE_KEYWORDS.get(language, self.POSITIVE_KEYWORDS["tr"])
-        matched = [kw for kw in pos_list if kw in cleaned]
+        matched = [kw for kw in pos_list if _keyword_in_text(kw, cleaned)]
         if matched:
             return {
                 "sentiment": "positive",
